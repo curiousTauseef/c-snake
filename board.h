@@ -24,6 +24,15 @@ int is_snake_body(int row, int col, int colCount, int *snakePieces)
     }
 }
 
+void destroy_board(int width, int height) {
+    for (int i = 0; i < height; i++) {
+        for (int j = 0; j < width; j++) {
+            printf(" ");
+        }
+        printf("\n");
+    }
+}
+
 void draw_board(int width, int height, int *snakePieces)
 {
     // (unsigned)strlen(s) == 3 (+1)
