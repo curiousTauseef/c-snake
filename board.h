@@ -9,6 +9,9 @@ typedef int bool;
 #define OUTLINE_BOTTOM_LEFT  4
 #define OUTLINE_BOTTOM_RIGHT 5
 
+#define PADDING_SIDES 2
+#define PADDING_ENDS  2
+
 int is_snake_body(int row, int col, int colCount, int *snakePieces)
 {
     int i = 0;
@@ -47,8 +50,8 @@ void draw_board(int width, int height, int *snakePieces)
 
     char *body = "\u2588";
 
-    int innerWidth = width - 2;
-    int innerHeight = height - 2;
+    int innerWidth = width - PADDING_SIDES;
+    int innerHeight = height - PADDING_ENDS;
 
     printf("%s", outline[OUTLINE_TOP_LEFT]);
     for (int i = 0; i < innerWidth; i++) {
@@ -68,7 +71,7 @@ void draw_board(int width, int height, int *snakePieces)
 
     printf("%s", outline[OUTLINE_BOTTOM_LEFT]);
     for (int i = 0; i < innerWidth; i++) {
-        printf("%s", outline[1]);
+        printf("%s", outline[OUTLINE_HORIZONTAL]);
     }
 
     printf("%s\n", outline[OUTLINE_BOTTOM_RIGHT]);

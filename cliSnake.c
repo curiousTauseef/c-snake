@@ -1,13 +1,19 @@
 #include <stdio.h>
 #include <string.h>
+#include <pthread.h>
+#include <signal.h>
+
 #include "board.h"
 #include "console.h"
 
-typedef int key;
+void     INThandler(int);
+
+int width = 40;
+int height = 20;
 
 int main() {
-    int width = 40;
-    int height = 20;
+    signal(SIGINT, INThandler);
+    int delay = 1; // second
 
     int innerWidth = width - 2;
 
@@ -20,28 +26,53 @@ int main() {
     snakePieces[4] = -1;
 
     console_disable_char();
+    key input = 0;
+
+    console_get_key_listen_start(&input);
+
+    int g = 3;
+    console_show_cursor(false);
     while (true) {
+        snakePieces[0] = (innerWidth * g) + 2;
+        snakePieces[1] = (innerWidth * g) + 3;
+        snakePieces[2] = (innerWidth * g) + 4;
+        snakePieces[3] = (innerWidth * g) + 5;
+        snakePieces[4] = -1;
+
         draw_board(width, height, snakePieces);
         console_cursor_move_by(width, height);
-        key input = console_get_key();
 
-        if (input == KEY_ESCAPE) {
-            destroy_board(width, height);
-            console_cursor_move_by(width, height);
-            console_enable_char();
-            return 0;
+        if (input > 0) {
+            console_get_key_listen_stop();
+
+            if (input == KEY_ESCAPE) {
+                destroy_board(width, height);
+                console_cursor_move_by(width, height);
+                console_enable_char();
+                console_show_cursor(true);
+                return 0;
+            }
+
+            input = 0;
+            console_get_key_listen_start(&input);
+            g--;
+        } else {
+            g++;
         }
 
-
-
-
-        snakePieces[0] = (innerWidth * 4) + 2;
-        snakePieces[1] = (innerWidth * 4) + 3;
-        snakePieces[2] = (innerWidth * 4) + 4;
-        snakePieces[3] = (innerWidth * 4) + 5;
-        snakePieces[4] = (innerWidth * 4) + 6;
-        snakePieces[5] = -1;
+        usleep(delay * 100000);
     }
 
     return 0;
+}
+
+void INThandler(int sig)
+{
+    console_get_key_listen_cancel();
+    destroy_board(width, height);
+    console_cursor_move_by(width, height);
+    console_enable_char();
+    console_show_cursor(true);
+
+    exit(1);
 }
