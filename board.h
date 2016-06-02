@@ -19,21 +19,25 @@ struct Board {
     int innerWidth;
     int height;
     int innerHeight;
+    int cellsCount;
+    struct {
+        int top;
+        int bottom;
+        int left;
+        int right;
+    } padding;
 };
 
-int is_snake_body(int row, int col, int colCount, int *snakePieces)
+//int is_snake_body(int row, int col, int colCount, int *snakePieces, int snakeLength)
+int is_snake_body(int *snakePieces, int snakeLength, int cell)
 {
-    int i = 0;
-    while (true) {
-        if (snakePieces[i] == -1) {
-            return false;
-        }
-
-        if (snakePieces[i] == (row * colCount) + col) {
+    for (int i = 0; i < snakeLength; i++) {
+        if (snakePieces[i] == cell) {
             return true;
         }
-        i++;
     }
+
+    return false;
 }
 
 void destroy_board(int width, int height) {
@@ -46,13 +50,7 @@ void destroy_board(int width, int height) {
 }
 
 key lastDirection;
-
-void snake_set_last_position(key direction)
-{
-    lastDirection = direction;
-}
-
-bool snake_is_try_to_reverse(int direction)
+bool snake_is_try_to_reverse(key direction)
 {
     if (lastDirection == KEY_UP && direction == KEY_DOWN) {
         return true;
@@ -73,7 +71,30 @@ bool snake_is_try_to_reverse(int direction)
     return false;
 }
 
-bool snake_move(int *snakePieces, key direction, struct Board board)
+bool snake_hit_wall(struct Board board, key direction, int snakeHead)
+{
+    // direction == KEY_UP
+    if (snakeHead < 0) {
+        return true;
+    }
+
+    // KEY_DOWN
+    if (snakeHead > board.innerWidth * board.innerHeight) {
+        return true;
+    }
+
+    if (direction == KEY_RIGHT && snakeHead % board.innerWidth == 0) {
+        return true;
+    }
+
+    if (direction == KEY_LEFT && (snakeHead + 1) % board.innerWidth == 0) {
+        return true;
+    }
+
+    return false;
+}
+
+bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board board)
 {
     bool isWrapAround = false;
 
@@ -90,52 +111,50 @@ bool snake_move(int *snakePieces, key direction, struct Board board)
             direction = lastDirection;
     }
 
-    snakePieces[3] = snakePieces[2];
-    snakePieces[2] = snakePieces[1];
-    snakePieces[1] = snakePieces[0];
+    for (int i = *snakeLength - 1; i; i--) {
+        snakePieces[i] = snakePieces[i - 1];
+    }
+
     switch (direction) {
         case KEY_UP:
             snakePieces[0] = snakePieces[0] - board.innerWidth;
-
-            if (!isWrapAround) {
-                if (snakePieces[0] < 0) {
-                    return false;
-                }
-            }
         break;
         case KEY_DOWN:
             snakePieces[0] = snakePieces[0] + board.innerWidth;
-
-            if (!isWrapAround) {
-                if (snakePieces[0] > board.innerWidth * board.innerHeight) {
-                    return false;
-                }
-            }
         break;
         case KEY_RIGHT:
             snakePieces[0] = snakePieces[0] + 1;
-
-            if (!isWrapAround) {
-                if (snakePieces[0] % board.innerWidth == 0) {
-                    return false;
-                }
-            }
         break;
         case KEY_LEFT:
             snakePieces[0] = snakePieces[0] - 1;
-
-            if (!isWrapAround) {
-                if ((snakePieces[0] + 1) % board.innerWidth == 0) {
-                    return false;
-                }
-            }
         break;
+    }
+
+    if (snake_hit_wall(board, direction, snakePieces[0])) {
+        if (!isWrapAround) {
+            return false;
+        }
+
+        switch (direction) {
+            case KEY_UP:
+                snakePieces[0] = snakePieces[0] + (board.innerWidth * board.innerHeight);
+            break;
+            case KEY_DOWN:
+                snakePieces[0] = snakePieces[0] - (board.innerWidth * board.innerHeight);
+            break;
+            case KEY_RIGHT:
+                snakePieces[0] = snakePieces[0] - board.innerWidth;
+            break;
+            case KEY_LEFT:
+                snakePieces[0] = snakePieces[0] + board.innerWidth;
+            break;
+        }
     }
 
     return true;
 }
 
-void draw_board(int width, int height, int *snakePieces)
+void draw_board(int width, int height, int *snakePieces, int snakeLength)
 {
     // (unsigned)strlen(s) == 3 (+1)
     char outline[6][4] = {
@@ -162,9 +181,14 @@ void draw_board(int width, int height, int *snakePieces)
     for (int i = 0; i < innerHeight; i++) {
         printf("%s", outline[OUTLINE_VERTICAL]);
         for (int j = 0; j < innerWidth; j++) {
-            bool is_snake = is_snake_body(i, j, innerWidth, snakePieces);
+            bool is_snake = is_snake_body(
+                snakePieces,
+                snakeLength,
+                ((i * innerWidth) + j));
+
             printf("%s", (is_snake) ? body : " ");
         }
+
         printf("%s\n", outline[OUTLINE_VERTICAL]);
     }
 

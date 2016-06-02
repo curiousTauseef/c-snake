@@ -3,8 +3,10 @@
 #include <pthread.h>
 #include <signal.h>
 
+
 #include "board.h"
 #include "console.h"
+#include "game.h"
 
 void     INThandler(int);
 
@@ -23,33 +25,41 @@ void pre_quit()
 int main()
 {
     signal(SIGINT, INThandler);
+    game_setup_board();
     int delay = 20; // hundredths
-
-    int innerWidth = width - 2;
 
     struct Board board;
     board.width = width;
     board.height = height;
-    board.innerWidth = width - 2;
-    board.innerHeight = height - 2;
 
-    int snakePieces[(width - 2) * (height - 2)];
+    board.padding.top = 1;
+    board.padding.bottom = 1;
+    board.padding.left = 1;
+    board.padding.right = 1;
 
-    snakePieces[0] = (innerWidth * 3) + 5;
-    snakePieces[1] = (innerWidth * 3) + 4;
-    snakePieces[2] = (innerWidth * 3) + 3;
-    snakePieces[3] = (innerWidth * 3) + 2;
-    snakePieces[4] = -1;
+    board.innerWidth = board.width - board.padding.left - board.padding.right;
+    board.innerHeight = board.height - board.padding.top - board.padding.bottom;
+
+    board.cellsCount = board.innerWidth * board.innerHeight;
+
+    int snakePieces[board.cellsCount];
+
+    int snakeLength = 20;
+    for (int i = 0; i < snakeLength; i++) {
+        snakePieces[i] = (snakeLength - i) + 2;
+    }
 
     console_disable_char();
     key input = 0;
 
     console_get_key_listen_start(&input);
-    snake_set_last_position(KEY_RIGHT);
+
+    snake_move(&snakePieces[0], &snakeLength, KEY_RIGHT, board);
+
     console_show_cursor(false);
 
     while (true) {
-        draw_board(width, height, snakePieces);
+        draw_board(width, height, snakePieces, snakeLength);
         console_cursor_move_by(width, height);
 
         if (input > 0) {
@@ -65,8 +75,8 @@ int main()
         }
 
         usleep(delay * 10000);
-        bool okMove = snake_move(&snakePieces[0], input, board);
-        if (!okMove) {
+
+        if (!snake_move(&snakePieces[0], &snakeLength, input, board)) {
             printf("Game Over!\n");
             console_cursor_move_by(0, 1);
             usleep(5 * 1000000);
