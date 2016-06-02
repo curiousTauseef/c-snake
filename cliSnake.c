@@ -3,10 +3,8 @@
 #include <pthread.h>
 #include <signal.h>
 
-
 #include "board.h"
 #include "console.h"
-#include "game.h"
 
 void     INThandler(int);
 
@@ -25,7 +23,7 @@ void pre_quit()
 int main()
 {
     signal(SIGINT, INThandler);
-    game_setup_board();
+
     int delay = 20; // hundredths
 
     struct Board board;

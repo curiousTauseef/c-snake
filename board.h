@@ -96,7 +96,7 @@ bool snake_hit_wall(struct Board board, key direction, int snakeHead)
 
 bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board board)
 {
-    bool isWrapAround = false;
+    bool isWrapAround = true;
 
     switch (direction) {
         case KEY_UP:
@@ -115,20 +115,33 @@ bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board 
         snakePieces[i] = snakePieces[i - 1];
     }
 
+    int newHeadPosition;
     switch (direction) {
         case KEY_UP:
-            snakePieces[0] = snakePieces[0] - board.innerWidth;
+            newHeadPosition = - board.innerWidth;
         break;
         case KEY_DOWN:
-            snakePieces[0] = snakePieces[0] + board.innerWidth;
+            newHeadPosition = board.innerWidth;
         break;
         case KEY_RIGHT:
-            snakePieces[0] = snakePieces[0] + 1;
+            newHeadPosition = 1;
         break;
         case KEY_LEFT:
-            snakePieces[0] = snakePieces[0] - 1;
+            newHeadPosition = - 1;
         break;
     }
+
+    bool hitTail = is_snake_body(
+        snakePieces,
+        *snakeLength,
+        snakePieces[0] + newHeadPosition
+    );
+
+    if (hitTail) {
+        return false;
+    }
+
+    snakePieces[0] = snakePieces[0] + newHeadPosition;
 
     if (snake_hit_wall(board, direction, snakePieces[0])) {
         if (!isWrapAround) {
@@ -184,7 +197,8 @@ void draw_board(int width, int height, int *snakePieces, int snakeLength)
             bool is_snake = is_snake_body(
                 snakePieces,
                 snakeLength,
-                ((i * innerWidth) + j));
+                ((i * innerWidth) + j)
+            );
 
             printf("%s", (is_snake) ? body : " ");
         }
