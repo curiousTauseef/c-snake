@@ -6,17 +6,7 @@
 #include <termios.h>
 #include <getopt.h>
 #include <sys/ioctl.h>
-
-#define KEY_QUIT      0
-#define KEY_DOWN      66
-#define KEY_UP        65
-#define KEY_LEFT      68
-#define KEY_RIGHT     67
-#define KEY_ESCAPE    27
-//#define KEY_PAGE_UP   53
-//#define KEY_PAGE_DOWN 54
-
-typedef int key;
+#include "keys.h"
 
 struct termios origterm, tmpterm;
 

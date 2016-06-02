@@ -1,3 +1,5 @@
+#include "keys.h"
+
 typedef int bool;
 #define true  1
 #define false 0
@@ -11,6 +13,13 @@ typedef int bool;
 
 #define PADDING_SIDES 2
 #define PADDING_ENDS  2
+
+struct Board {
+    int width;
+    int innerWidth;
+    int height;
+    int innerHeight;
+};
 
 int is_snake_body(int row, int col, int colCount, int *snakePieces)
 {
@@ -34,6 +43,96 @@ void destroy_board(int width, int height) {
         }
         printf("\n");
     }
+}
+
+key lastDirection;
+
+void snake_set_last_position(key direction)
+{
+    lastDirection = direction;
+}
+
+bool snake_is_try_to_reverse(int direction)
+{
+    if (lastDirection == KEY_UP && direction == KEY_DOWN) {
+        return true;
+    }
+
+    if (lastDirection == KEY_DOWN && direction == KEY_UP) {
+        return true;
+    }
+
+    if (lastDirection == KEY_LEFT && direction == KEY_RIGHT) {
+        return true;
+    }
+
+    if (lastDirection == KEY_RIGHT && direction == KEY_LEFT) {
+        return true;
+    }
+
+    return false;
+}
+
+bool snake_move(int *snakePieces, key direction, struct Board board)
+{
+    bool isWrapAround = false;
+
+    switch (direction) {
+        case KEY_UP:
+        case KEY_DOWN:
+        case KEY_LEFT:
+        case KEY_RIGHT:
+            if (!snake_is_try_to_reverse(direction)) {
+                lastDirection = direction;
+                break;
+            }
+        default: // not matched - or trying to reverse
+            direction = lastDirection;
+    }
+
+    snakePieces[3] = snakePieces[2];
+    snakePieces[2] = snakePieces[1];
+    snakePieces[1] = snakePieces[0];
+    switch (direction) {
+        case KEY_UP:
+            snakePieces[0] = snakePieces[0] - board.innerWidth;
+
+            if (!isWrapAround) {
+                if (snakePieces[0] < 0) {
+                    return false;
+                }
+            }
+        break;
+        case KEY_DOWN:
+            snakePieces[0] = snakePieces[0] + board.innerWidth;
+
+            if (!isWrapAround) {
+                if (snakePieces[0] > board.innerWidth * board.innerHeight) {
+                    return false;
+                }
+            }
+        break;
+        case KEY_RIGHT:
+            snakePieces[0] = snakePieces[0] + 1;
+
+            if (!isWrapAround) {
+                if (snakePieces[0] % board.innerWidth == 0) {
+                    return false;
+                }
+            }
+        break;
+        case KEY_LEFT:
+            snakePieces[0] = snakePieces[0] - 1;
+
+            if (!isWrapAround) {
+                if ((snakePieces[0] + 1) % board.innerWidth == 0) {
+                    return false;
+                }
+            }
+        break;
+    }
+
+    return true;
 }
 
 void draw_board(int width, int height, int *snakePieces)
