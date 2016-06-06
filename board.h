@@ -94,9 +94,9 @@ bool snake_hit_wall(struct Board board, key direction, int snakeHead)
     return false;
 }
 
-bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board board)
+bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board board, int foodPosition, bool *snakeGrew)
 {
-    bool isWrapAround = true;
+    bool isWrapAround = false;
 
     switch (direction) {
         case KEY_UP:
@@ -111,37 +111,48 @@ bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board 
             direction = lastDirection;
     }
 
+    int headMoveBy;
+    switch (direction) {
+        case KEY_UP:
+            headMoveBy = - board.innerWidth;
+        break;
+        case KEY_DOWN:
+            headMoveBy = board.innerWidth;
+        break;
+        case KEY_RIGHT:
+            headMoveBy = 1;
+        break;
+        case KEY_LEFT:
+            headMoveBy = - 1;
+        break;
+    }
+
+    int newHeadPosition = snakePieces[0] + headMoveBy;
+
+    if (foodPosition == newHeadPosition) {
+        *snakeLength = *snakeLength + 1;
+        *snakeGrew = true;
+    }
+
     for (int i = *snakeLength - 1; i; i--) {
         snakePieces[i] = snakePieces[i - 1];
     }
 
-    int newHeadPosition;
-    switch (direction) {
-        case KEY_UP:
-            newHeadPosition = - board.innerWidth;
-        break;
-        case KEY_DOWN:
-            newHeadPosition = board.innerWidth;
-        break;
-        case KEY_RIGHT:
-            newHeadPosition = 1;
-        break;
-        case KEY_LEFT:
-            newHeadPosition = - 1;
-        break;
+    if (foodPosition != newHeadPosition) {
+        bool hitTail = is_snake_body(
+            snakePieces,
+            *snakeLength,
+            newHeadPosition
+        );
+
+        if (hitTail) {
+            return false;
+        }
     }
 
-    bool hitTail = is_snake_body(
-        snakePieces,
-        *snakeLength,
-        snakePieces[0] + newHeadPosition
-    );
 
-    if (hitTail) {
-        return false;
-    }
 
-    snakePieces[0] = snakePieces[0] + newHeadPosition;
+    snakePieces[0] = newHeadPosition;
 
     if (snake_hit_wall(board, direction, snakePieces[0])) {
         if (!isWrapAround) {
@@ -167,7 +178,29 @@ bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board 
     return true;
 }
 
-void draw_board(int width, int height, int *snakePieces, int snakeLength)
+int board_create_food_position(struct Board board, int *snakePieces, int snakeLength)
+{
+    // Seems to get a nice random-ish seed, better than time
+    srand (clock());
+
+    for (int i = 0; i < 1000000; i++) {
+        int position = rand() % (board.cellsCount + 1);
+
+        bool isSnake = is_snake_body(
+            snakePieces,
+            snakeLength,
+            position
+        );
+
+        if (!isSnake) {
+            return position;
+        }
+    }
+
+    return 0;
+}
+
+void board_draw(int width, int height, int *snakePieces, int snakeLength, int foodPosition)
 {
     // (unsigned)strlen(s) == 3 (+1)
     char outline[6][4] = {
@@ -180,6 +213,7 @@ void draw_board(int width, int height, int *snakePieces, int snakeLength)
     };
 
     char *body = "\u2588";
+    char *food = "\u25AA";
 
     int innerWidth = width - PADDING_SIDES;
     int innerHeight = height - PADDING_ENDS;
@@ -194,13 +228,19 @@ void draw_board(int width, int height, int *snakePieces, int snakeLength)
     for (int i = 0; i < innerHeight; i++) {
         printf("%s", outline[OUTLINE_VERTICAL]);
         for (int j = 0; j < innerWidth; j++) {
-            bool is_snake = is_snake_body(
+            bool isSnake = is_snake_body(
                 snakePieces,
                 snakeLength,
                 ((i * innerWidth) + j)
             );
 
-            printf("%s", (is_snake) ? body : " ");
+            if (isSnake) {
+                printf("%s", body);
+            } else if ((i * innerWidth) + j == foodPosition) {
+                printf("%s", food);
+            } else {
+                printf(" ");
+            }
         }
 
         printf("%s\n", outline[OUTLINE_VERTICAL]);

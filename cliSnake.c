@@ -2,14 +2,17 @@
 #include <string.h>
 #include <pthread.h>
 #include <signal.h>
+#include <stdlib.h>
+
 
 #include "board.h"
 #include "console.h"
 
+
 void     INThandler(int);
 
 int width = 40;
-int height = 20;
+int height = 30;
 
 void pre_quit()
 {
@@ -42,22 +45,28 @@ int main()
 
     int snakePieces[board.cellsCount];
 
-    int snakeLength = 20;
+    int snakeLength = 10;
     for (int i = 0; i < snakeLength; i++) {
         snakePieces[i] = (snakeLength - i) + 2;
     }
 
     console_disable_char();
     key input = 0;
+    key inputNew = input;
 
     console_get_key_listen_start(&input);
 
-    snake_move(&snakePieces[0], &snakeLength, KEY_RIGHT, board);
+    bool snakeGrew = false;
+    int foodPosition = board_create_food_position(board, snakePieces, snakeLength);
+    snake_move(&snakePieces[0], &snakeLength, KEY_RIGHT, board, foodPosition, &snakeGrew);
 
     console_show_cursor(false);
 
     while (true) {
-        draw_board(width, height, snakePieces, snakeLength);
+        if (snakeGrew) {
+            foodPosition = board_create_food_position(board, snakePieces, snakeLength);
+        }
+        board_draw(width, height, snakePieces, snakeLength, foodPosition);
         console_cursor_move_by(width, height);
 
         if (input > 0) {
@@ -68,13 +77,15 @@ int main()
                 return 0;
             }
 
+            inputNew = input;
             input = 0;
             console_get_key_listen_start(&input);
         }
 
         usleep(delay * 10000);
 
-        if (!snake_move(&snakePieces[0], &snakeLength, input, board)) {
+        snakeGrew = false;
+        if (!snake_move(&snakePieces[0], &snakeLength, inputNew, board, foodPosition, &snakeGrew)) {
             printf("Game Over!\n");
             console_cursor_move_by(0, 1);
             usleep(5 * 1000000);
