@@ -25,6 +25,22 @@ struct Board {
     } padding;
 };
 
+void board_setup(struct Board *board, int width, int height)
+{
+    board->width = width;
+    board->height = height;
+
+    board->padding.top = 1;
+    board->padding.bottom = 1;
+    board->padding.left = 1;
+    board->padding.right = 1;
+
+    board->innerWidth = board->width - board->padding.left - board->padding.right;
+    board->innerHeight = board->height - board->padding.top - board->padding.bottom;
+
+    board->cellsCount = board->innerWidth * board->innerHeight;
+}
+
 //int is_snake_body(int row, int col, int colCount, int *snakePieces, int snakeLength)
 int is_snake_body(int *snakePieces, int snakeLength, int cell)
 {

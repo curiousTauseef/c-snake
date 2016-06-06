@@ -30,18 +30,7 @@ int main()
     int delay = 500000;
 
     struct Board board;
-    board.width = width;
-    board.height = height;
-
-    board.padding.top = 1;
-    board.padding.bottom = 1;
-    board.padding.left = 1;
-    board.padding.right = 1;
-
-    board.innerWidth = board.width - board.padding.left - board.padding.right;
-    board.innerHeight = board.height - board.padding.top - board.padding.bottom;
-
-    board.cellsCount = board.innerWidth * board.innerHeight;
+    board_setup(&board, width, height);
 
     int snakePieces[board.cellsCount];
 
