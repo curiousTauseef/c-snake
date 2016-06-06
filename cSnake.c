@@ -4,15 +4,15 @@
 #include <signal.h>
 #include <stdlib.h>
 
-
 #include "board.h"
 #include "console.h"
 
+// To compile: gcc -x c cSnake.c -o cSnake -lpthread
 
 void     INThandler(int);
 
-int width = 40;
-int height = 30;
+int width = 20;
+int height = 10;
 
 void pre_quit()
 {
@@ -27,7 +27,7 @@ int main()
 {
     signal(SIGINT, INThandler);
 
-    int delay = 20; // hundredths
+    int delay = 500000;
 
     struct Board board;
     board.width = width;
@@ -66,7 +66,7 @@ int main()
         if (snakeGrew) {
             foodPosition = board_create_food_position(board, snakePieces, snakeLength);
         }
-        board_draw(width, height, snakePieces, snakeLength, foodPosition);
+        board_draw(board, snakePieces, snakeLength, foodPosition);
         console_cursor_move_by(width, height);
 
         if (input > 0) {
@@ -82,7 +82,7 @@ int main()
             console_get_key_listen_start(&input);
         }
 
-        usleep(delay * 10000);
+        usleep(delay);
 
         snakeGrew = false;
         if (!snake_move(&snakePieces[0], &snakeLength, inputNew, board, foodPosition, &snakeGrew)) {
@@ -91,6 +91,13 @@ int main()
             usleep(5 * 1000000);
             pre_quit();
             return 0;
+        }
+
+        if (snakeGrew) {
+            delay = delay - 40000;
+            if (delay < 1000) {
+                delay = 1000;
+            }
         }
     }
 

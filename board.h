@@ -11,9 +11,6 @@ typedef int bool;
 #define OUTLINE_BOTTOM_LEFT  4
 #define OUTLINE_BOTTOM_RIGHT 5
 
-#define PADDING_SIDES 2
-#define PADDING_ENDS  2
-
 struct Board {
     int width;
     int innerWidth;
@@ -96,7 +93,7 @@ bool snake_hit_wall(struct Board board, key direction, int snakeHead)
 
 bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board board, int foodPosition, bool *snakeGrew)
 {
-    bool isWrapAround = false;
+    bool isWrapAround = true;
 
     switch (direction) {
         case KEY_UP:
@@ -200,7 +197,7 @@ int board_create_food_position(struct Board board, int *snakePieces, int snakeLe
     return 0;
 }
 
-void board_draw(int width, int height, int *snakePieces, int snakeLength, int foodPosition)
+void board_draw(struct Board board, int *snakePieces, int snakeLength, int foodPosition)
 {
     // (unsigned)strlen(s) == 3 (+1)
     char outline[6][4] = {
@@ -215,28 +212,25 @@ void board_draw(int width, int height, int *snakePieces, int snakeLength, int fo
     char *body = "\u2588";
     char *food = "\u25AA";
 
-    int innerWidth = width - PADDING_SIDES;
-    int innerHeight = height - PADDING_ENDS;
-
     printf("%s", outline[OUTLINE_TOP_LEFT]);
-    for (int i = 0; i < innerWidth; i++) {
+    for (int i = 0; i < board.innerWidth; i++) {
         printf("%s", outline[OUTLINE_HORIZONTAL]);
     }
 
     printf("%s\n", outline[OUTLINE_TOP_RIGHT]);
 
-    for (int i = 0; i < innerHeight; i++) {
+    for (int i = 0; i < board.innerHeight; i++) {
         printf("%s", outline[OUTLINE_VERTICAL]);
-        for (int j = 0; j < innerWidth; j++) {
+        for (int j = 0; j < board.innerWidth; j++) {
             bool isSnake = is_snake_body(
                 snakePieces,
                 snakeLength,
-                ((i * innerWidth) + j)
+                ((i * board.innerWidth) + j)
             );
 
             if (isSnake) {
                 printf("%s", body);
-            } else if ((i * innerWidth) + j == foodPosition) {
+            } else if ((i * board.innerWidth) + j == foodPosition) {
                 printf("%s", food);
             } else {
                 printf(" ");
@@ -247,7 +241,7 @@ void board_draw(int width, int height, int *snakePieces, int snakeLength, int fo
     }
 
     printf("%s", outline[OUTLINE_BOTTOM_LEFT]);
-    for (int i = 0; i < innerWidth; i++) {
+    for (int i = 0; i < board.innerWidth; i++) {
         printf("%s", outline[OUTLINE_HORIZONTAL]);
     }
 
