@@ -11,7 +11,19 @@ typedef int bool;
 #define OUTLINE_BOTTOM_LEFT  4
 #define OUTLINE_BOTTOM_RIGHT 5
 
+#define BOARD_WIDTH_DEFAULT  50;
+#define BOARD_HEIGHT_DEFAULT 40;
+
+#define MANUAL_DESCRIPTION "Usage: cSnake [options]\n\
+\n\
+Options:\n\
+  -h, --height <lines>   The height of the game (bounding box)\n\
+  -w, --width <columns>  The width of the game (bounding box)\n\
+  -a, --wrap-around      Whether the snake can run through the walls\n\
+  -e, --help             Displays this help\n"
+
 struct Board {
+    bool wrapAround;
     int width;
     int innerWidth;
     int height;
@@ -25,11 +37,11 @@ struct Board {
     } padding;
 };
 
-void board_setup(struct Board *board, int width, int height)
+void board_setup(struct Board *board, int width, int height, bool wrapAround)
 {
     board->width = width;
     board->height = height;
-
+    board->wrapAround = wrapAround;
     board->padding.top = 1;
     board->padding.bottom = 1;
     board->padding.left = 1;
@@ -107,10 +119,11 @@ bool snake_hit_wall(struct Board board, key direction, int snakeHead)
     return false;
 }
 
+/*
+ * Returns true to indicate that the game is not over after this move
+ */
 bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board board, int foodPosition, bool *snakeGrew)
 {
-    bool isWrapAround = true;
-
     switch (direction) {
         case KEY_UP:
         case KEY_DOWN:
@@ -163,12 +176,12 @@ bool snake_move(int *snakePieces, int *snakeLength, key direction, struct Board 
         }
     }
 
-
-
     snakePieces[0] = newHeadPosition;
 
     if (snake_hit_wall(board, direction, snakePieces[0])) {
-        if (!isWrapAround) {
+        // If we hit a wall and this is a wrap-around game
+        // then the game isn't over, the below code will figure out where to draw the head
+        if (!board.wrapAround) {
             return false;
         }
 
@@ -213,17 +226,32 @@ int board_create_food_position(struct Board board, int *snakePieces, int snakeLe
     return 0;
 }
 
+/*
+ * Called for each tick of the main draw loop
+ * will redraw the board and will also put food and snake in
+ * Does not store a 1:1 view of the output, it just prints each char by
+ * calculating what each grid square should be
+ */
 void board_draw(struct Board board, int *snakePieces, int snakeLength, int foodPosition)
 {
-    // (unsigned)strlen(s) == 3 (+1)
+    // Non wrap around
     char outline[6][4] = {
-        "\u256D", // |``   // OUTLINE_TOP_LEFT
-        "\u2500", // --    // OUTLINE_HORIZONTAL
-        "\u256E", // ``|   // OUTLINE_TOP_RIGHT
-        "\u2502", // |     // OUTLINE_VERTICAL
-        "\u2570", // |_    // OUTLINE_BOTTOM_LEFT
-        "\u256F"  // _|    // OUTLINE_BOTTOM_RIGHT
+        "\u2554", // |``   // OUTLINE_TOP_LEFT
+        "\u2550", // --    // OUTLINE_HORIZONTAL
+        "\u2557", // ``|   // OUTLINE_TOP_RIGHT
+        "\u2551", // |     // OUTLINE_VERTICAL
+        "\u255A", // |_    // OUTLINE_BOTTOM_LEFT
+        "\u255D"  // _|    // OUTLINE_BOTTOM_RIGHT
     };
+
+    if (board.wrapAround) {
+        strcpy(outline[0], "\u256D"); // |``   // OUTLINE_TOP_LEFT
+        strcpy(outline[1], "\u2500"); // --    // OUTLINE_HORIZONTAL
+        strcpy(outline[2], "\u256E"); // ``|   // OUTLINE_TOP_RIGHT
+        strcpy(outline[3], "\u2502"); // |     // OUTLINE_VERTICAL
+        strcpy(outline[4], "\u2570"); // |_    // OUTLINE_BOTTOM_LEFT
+        strcpy(outline[5], "\u256F"); // _|    // OUTLINE_BOTTOM_RIGHT
+    }
 
     char *body = "\u2588";
     char *food = "\u25AA";
