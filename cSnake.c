@@ -8,7 +8,7 @@
 #include "board.c"
 #include "console.c"
 
-// To compile: gcc -x c cSnake.c -o cSnake -lpthread
+// To compile: gcc -x c cSnake.c -o c-snake -lpthread
 
 void INThandler(int);
 struct Board board;
