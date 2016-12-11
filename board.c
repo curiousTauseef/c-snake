@@ -12,7 +12,7 @@ typedef int bool;
 #define OUTLINE_BOTTOM_RIGHT 5
 
 #define BOARD_WIDTH_DEFAULT  50;
-#define BOARD_HEIGHT_DEFAULT 40;
+#define BOARD_HEIGHT_DEFAULT 20;
 
 #define MANUAL_DESCRIPTION "Usage: cSnake [options]\n\
 \n\

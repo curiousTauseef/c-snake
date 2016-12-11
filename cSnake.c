@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-#include "board.h"
-#include "console.h"
+#include "board.c"
+#include "console.c"
 
 // To compile: gcc -x c cSnake.c -o cSnake -lpthread
 
@@ -126,9 +126,9 @@ int main(int argc, char **argv)
         }
 
         if (snakeGrew) {
-            delay = delay - 40000;
-            if (delay < 1000) {
-                delay = 1000;
+            delay = delay - 20000;
+            if (delay < 10000) {
+                delay = 10000;
             }
         }
     }
